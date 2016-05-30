@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration verbose="true" scan="true" scanPeriod="10 seconds">
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%-50.50t) %yellow(%50.50c{50}) %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+        <encoder>
+            <pattern>%date{ISO8601} %-5level %-50.50t %50.50c{50} %msg%n</pattern>
+        </encoder>
+        <append>false</append>
+        <file>logs/application.log</file>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="console"/>
+        <appender-ref ref="file"/>
+    </root>
+</configuration>
