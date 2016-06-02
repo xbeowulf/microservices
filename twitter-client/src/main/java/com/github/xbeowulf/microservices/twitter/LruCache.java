@@ -9,10 +9,11 @@ public class LruCache<K, V> {
 
     private Map<K, V> cache;
 
-    public LruCache(int size) {
-        cache = synchronizedMap(new LinkedHashMap<K, V>(size, 0.75f, true) {
+    public LruCache(int cacheSize) {
 
-            private int maxSize = size;
+        cache = synchronizedMap(new LinkedHashMap<K, V>(cacheSize, 0.75f, true) {
+
+            private int maxSize = cacheSize;
 
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> entry) {
