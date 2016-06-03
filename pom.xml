@@ -11,7 +11,9 @@
     <name>Microservices example</name>
 
     <modules>
+        <module>sqs-dev</module>
         <module>twitter-client</module>
+        <module>alchemy-client</module>
     </modules>
 
 </project>
