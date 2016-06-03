@@ -2,18 +2,19 @@ package com.github.xbeowulf.microservices.twitter;
 
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import twitter4j.Status;
 import twitter4j.StatusAdapter;
 
 import java.util.stream.Stream;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class TwitterListener extends StatusAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(TwitterListener.class);
+    private static final Logger log = getLogger(TwitterListener.class);
 
-    private static final int DEFAULT_CACHE_SIZE = 100_000;
+    private static final int DEFAULT_CACHE_SIZE = 1000;
 
     private LRUMap<String, String> cache = new LRUMap<>(DEFAULT_CACHE_SIZE);
 
