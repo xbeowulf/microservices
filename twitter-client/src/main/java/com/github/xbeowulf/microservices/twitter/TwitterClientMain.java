@@ -1,18 +1,22 @@
 package com.github.xbeowulf.microservices.twitter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 import twitter4j.FilterQuery;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 
+@SpringBootApplication
 public class TwitterClientMain {
 
-    private static Logger log = LoggerFactory.getLogger(TwitterClientMain.class);
-
     public static void main(String[] args) {
+        SpringApplication.run(TwitterClientMain.class, args);
+    }
 
+    @Bean
+    public static TwitterStream twitterStream() {
         TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
         twitterStream.addListener(new TwitterListener());
 
@@ -33,6 +37,8 @@ public class TwitterClientMain {
                 "reuters com"};
 
         twitterStream.filter(new FilterQuery(track));
+
+        return twitterStream;
     }
 
 }
