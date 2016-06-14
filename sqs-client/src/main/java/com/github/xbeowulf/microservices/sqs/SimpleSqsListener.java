@@ -25,7 +25,8 @@ public class SimpleSqsListener {
     private final Consumer<String> action;
 
     private final ReceiveMessageRequest receiveMessageRequest;
-    private long backOffTimeSeconds = 5;
+    private int backOffTimeSeconds = 5;
+
     private volatile boolean isRunning;
 
     public SimpleSqsListener(AmazonSQS sqs, String queueUrl, Consumer<String> action) {
@@ -112,7 +113,7 @@ public class SimpleSqsListener {
         return this;
     }
 
-    public SimpleSqsListener withBackOffTimeSeconds(long backOffTimeSeconds) {
+    public SimpleSqsListener withBackOffTimeSeconds(int backOffTimeSeconds) {
         this.backOffTimeSeconds = backOffTimeSeconds;
         return this;
     }
