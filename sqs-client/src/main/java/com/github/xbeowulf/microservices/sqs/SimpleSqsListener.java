@@ -34,7 +34,7 @@ public class SimpleSqsListener {
         this.action = action;
 
         receiveMessageRequest = new ReceiveMessageRequest(queueUrl)
-                .withMaxNumberOfMessages(DEFAULT_MAX_NUMBER_OF_MESSAGES);
+                .withMaxNumberOfMessages(DEFAULT_MAX_NUMBER_OF_MESSAGES).clone();
     }
 
     public void start() {
@@ -55,6 +55,7 @@ public class SimpleSqsListener {
                             messageActionExecutor.submit(() -> {
                                 try {
                                     action.accept(message.getBody());
+                                    sqs.deleteMessage(getQueueUrl(), message.getReceiptHandle());
                                 } catch (Exception e) {
                                     log.error("Failed to process message: {}.", message);
                                 } finally {
@@ -62,7 +63,6 @@ public class SimpleSqsListener {
                                 }
                             });
 
-                            sqs.deleteMessage(getQueueUrl(), message.getReceiptHandle());
                         } else {
                             messageBatchLatch.countDown();
                         }
@@ -89,6 +89,8 @@ public class SimpleSqsListener {
     public void stop() {
         isRunning = false;
     }
+
+
 
     private String getQueueUrl() {
         return receiveMessageRequest.getQueueUrl();
