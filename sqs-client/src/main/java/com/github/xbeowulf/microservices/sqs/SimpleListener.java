@@ -21,12 +21,14 @@ public class SimpleListener {
     private final String queueName;
     private final Consumer<String> action;
 
-    private ExecutorService executor = newSingleThreadExecutor();
+    private final ExecutorService executor;
 
     public SimpleListener(AmazonSQS sqs, String queueName, Consumer<String> action) {
         this.sqs = sqs;
         this.queueName = queueName;
         this.action = action;
+
+        executor = newSingleThreadExecutor();
     }
 
     public void start() {
