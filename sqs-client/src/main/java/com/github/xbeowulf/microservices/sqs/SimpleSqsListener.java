@@ -19,14 +19,15 @@ public class SimpleSqsListener {
 
     private static final Logger log = getLogger(SimpleSqsListener.class);
 
-    private static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 5;
+    private static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 10;
+    private static final int DEFAULT_BACKOFF_TIME_SECONDS = 5;
 
     private final AmazonSQS sqs;
     private final Consumer<String> action;
     private final String queueUrl;
 
     private int maxNumberOfMessages = DEFAULT_MAX_NUMBER_OF_MESSAGES;
-    private int backOffTimeSeconds = 5;
+    private int backOffTimeSeconds = DEFAULT_BACKOFF_TIME_SECONDS;
     private Integer visibilityTimeoutSeconds;
     private Integer waitTimeSeconds;
 
@@ -48,7 +49,6 @@ public class SimpleSqsListener {
 
                 try {
                     List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
-                    log.info("Received {} messages.", messages.size());
                     CountDownLatch messageBatchLatch = new CountDownLatch(messages.size());
 
                     for (Message message : messages) {
