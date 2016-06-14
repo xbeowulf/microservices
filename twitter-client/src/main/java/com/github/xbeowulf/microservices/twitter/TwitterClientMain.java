@@ -1,5 +1,10 @@
 package com.github.xbeowulf.microservices.twitter;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.github.xbeowulf.microservices.sqs.SimpleDispatcher;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,9 +21,9 @@ public class TwitterClientMain {
     }
 
     @Bean
-    public static TwitterStream twitterStream() {
+    public static TwitterStream twitterStream(TwitterListener listener) {
         TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
-        twitterStream.addListener(new TwitterListener());
+        twitterStream.addListener(listener);
 
         String[] track = {
                 "abcnews go com",
@@ -39,6 +44,21 @@ public class TwitterClientMain {
         twitterStream.filter(new FilterQuery(track));
 
         return twitterStream;
+    }
+
+    @Bean
+    public TwitterListener twitterListener (){
+        return new TwitterListener();
+    }
+
+    @Bean
+    public SimpleDispatcher simpleDispatcher(AmazonSQS sqs) {
+        return new SimpleDispatcher(sqs, "http://localhost:9325/queue/url-from-twitter");
+    }
+
+    @Bean
+    public AmazonSQS amazonSqs() {
+        return new AmazonSQSClient(new BasicAWSCredentials("x", "x"));
     }
 
 }

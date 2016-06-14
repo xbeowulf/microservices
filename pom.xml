@@ -21,9 +21,11 @@
     </properties>
 
     <modules>
-        <module>sqs-dev</module>
+        <module>sqs-local</module>
+        <module>sqs-client</module>
         <module>twitter-client</module>
         <module>alchemy-client</module>
+        <module>url-service</module>
     </modules>
 
 </project>
