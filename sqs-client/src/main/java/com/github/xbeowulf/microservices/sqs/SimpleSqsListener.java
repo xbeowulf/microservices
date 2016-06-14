@@ -19,15 +19,12 @@ public class SimpleSqsListener {
 
     private static final Logger log = getLogger(SimpleSqsListener.class);
 
-    private static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 10;
-    private static final int DEFAULT_BACKOFF_TIME_SECONDS = 5;
-
     private final AmazonSQS sqs;
     private final Consumer<String> action;
     private final String queueUrl;
 
-    private int maxNumberOfMessages = DEFAULT_MAX_NUMBER_OF_MESSAGES;
-    private int backOffTimeSeconds = DEFAULT_BACKOFF_TIME_SECONDS;
+    private Integer maxNumberOfMessages = 10;
+    private Integer backOffTimeSeconds = 5;
     private Integer visibilityTimeoutSeconds;
     private Integer waitTimeSeconds;
 
