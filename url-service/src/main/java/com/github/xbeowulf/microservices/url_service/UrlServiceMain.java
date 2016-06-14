@@ -4,7 +4,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.github.xbeowulf.microservices.sqs.SimpleDispatcher;
-import com.github.xbeowulf.microservices.sqs.SimpleListener;
+import com.github.xbeowulf.microservices.sqs.SimpleSqsListener;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -27,8 +27,10 @@ public class UrlServiceMain {
         return new SimpleDispatcher(sqs, "http://localhost:9325/queue/url-from-twitter");
     }
     @Bean
-    public SimpleListener simpleListener(AmazonSQS sqs, UrlService urlService) {
-        SimpleListener listener = new SimpleListener(sqs, "http://localhost:9325/queue/url-from-twitter", urlService::onMessage);
+    public SimpleSqsListener simpleListener(AmazonSQS sqs, UrlService urlService) {
+        SimpleSqsListener
+                listener = new SimpleSqsListener(sqs, "http://localhost:9325/queue/url-from-twitter", urlService::onMessage);
+        listener.withWaitTimeSeconds(10).withMaxNumberOfMessages(10);
         listener.start();
 
         return listener;
