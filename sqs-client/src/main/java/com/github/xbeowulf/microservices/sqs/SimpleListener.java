@@ -10,17 +10,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class SimpleListener {
 
     private static final Logger log = getLogger(SimpleListener.class);
 
-    private AmazonSQS sqs;
-    private String queueName;
-    private Consumer<String> action;
-
-    private boolean isRunning;
+    private final AmazonSQS sqs;
+    private final String queueName;
+    private final Consumer<String> action;
 
     private ExecutorService executor = newSingleThreadExecutor();
 
@@ -30,27 +29,35 @@ public class SimpleListener {
         this.action = action;
     }
 
-    public void start(){
-        isRunning = true;
-        executor.submit( () -> {
+    public void start() {
+        executor.submit(() -> {
 
-            while (isRunning) {
+            while (!executor.isShutdown()) {
                 List<Message> messages = sqs.receiveMessage(queueName).getMessages();
                 for (Message message : messages) {
-                    try {
-                        action.accept(message.getBody());
+                    if (!executor.isShutdown()) {
+                        try {
+                            action.accept(message.getBody());
+                        } catch (Exception e) {
+                            log.error("Failed to process message: {}.", message);
+                        }
                         sqs.deleteMessage(queueName, message.getReceiptHandle());
-                    } catch (Exception e){
-                        log.error("Failed to process message: {}.", message);
                     }
-
                 }
             }
         });
     }
 
     public void stop() {
-        isRunning = false;
+        try {
+            executor.shutdown();
+            executor.awaitTermination(2000, MILLISECONDS);
+        } catch (InterruptedException e) {
+            log.error("Interrupted while waiting shutdown.");
+        } finally {
+            executor.shutdownNow();
+            log.info("Shutdown finished.");
+        }
     }
 
 }
