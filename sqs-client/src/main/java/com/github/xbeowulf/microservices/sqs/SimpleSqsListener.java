@@ -23,25 +23,27 @@ public class SimpleSqsListener {
 
     private final AmazonSQS sqs;
     private final Consumer<String> action;
+    private final String queueUrl;
 
-    private final ReceiveMessageRequest receiveMessageRequest;
+    private int maxNumberOfMessages = DEFAULT_MAX_NUMBER_OF_MESSAGES;
     private int backOffTimeSeconds = 5;
+    private Integer visibilityTimeoutSeconds;
+    private Integer waitTimeSeconds;
 
     private volatile boolean isRunning;
 
     public SimpleSqsListener(AmazonSQS sqs, String queueUrl, Consumer<String> action) {
         this.sqs = sqs;
+        this.queueUrl = queueUrl;
         this.action = action;
-
-        receiveMessageRequest = new ReceiveMessageRequest(queueUrl)
-                .withMaxNumberOfMessages(DEFAULT_MAX_NUMBER_OF_MESSAGES).clone();
     }
 
     public void start() {
         isRunning = true;
         newSingleThreadExecutor().submit(() -> {
 
-            ExecutorService messageActionExecutor = newFixedThreadPool(getMaxNumberOfMessages());
+            ReceiveMessageRequest receiveMessageRequest = buildReceiveMessageRequest();
+            ExecutorService messageActionExecutor = newFixedThreadPool(receiveMessageRequest.getMaxNumberOfMessages());
             while (isRunning) {
 
                 try {
@@ -75,7 +77,8 @@ public class SimpleSqsListener {
                     }
 
                 } catch (Exception e) {
-                    log.warn("Failed to poll queue {}. Will retry in {} seconds.", getQueueUrl(), getBackOffTimeSeconds(), e);
+                    log.warn("Failed to poll queue {}. Will retry in {} seconds.",
+                            getQueueUrl(), getBackOffTimeSeconds(), e);
                     try {
                         Thread.sleep(getBackOffTimeSeconds() * 1000);
                     } catch (InterruptedException ie) {
@@ -90,32 +93,53 @@ public class SimpleSqsListener {
         isRunning = false;
     }
 
+    private ReceiveMessageRequest buildReceiveMessageRequest() {
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(getQueueUrl())
+                .withMaxNumberOfMessages(getMaxNumberOfMessages());
 
+        if (getVisibilityTimeoutSeconds() != null) {
+            receiveMessageRequest.withVisibilityTimeout(getVisibilityTimeoutSeconds());
+        }
+
+        if (getWaitTimeSeconds() != null) {
+            receiveMessageRequest.withWaitTimeSeconds(getWaitTimeSeconds());
+        }
+
+        return receiveMessageRequest;
+    }
 
     private String getQueueUrl() {
-        return receiveMessageRequest.getQueueUrl();
+        return queueUrl;
     }
 
     public SimpleSqsListener withMaxNumberOfMessages(int maxNumberOfMessages) {
-        receiveMessageRequest.withMaxNumberOfMessages(maxNumberOfMessages);
+        this.maxNumberOfMessages = maxNumberOfMessages;
         return this;
     }
 
-    private Integer getMaxNumberOfMessages() {
-        return receiveMessageRequest.getMaxNumberOfMessages();
+    private int getMaxNumberOfMessages() {
+        return maxNumberOfMessages;
     }
 
-    public SimpleSqsListener withVisibilityTimeoutSeconds(int visibilityTimeout) {
-        receiveMessageRequest.withVisibilityTimeout(visibilityTimeout);
+    public SimpleSqsListener withVisibilityTimeout(Integer visibilityTimeoutSeconds) {
+        this.visibilityTimeoutSeconds = visibilityTimeoutSeconds;
         return this;
     }
 
-    public SimpleSqsListener withWaitTimeSeconds(int waitTime) {
-        receiveMessageRequest.withWaitTimeSeconds(waitTime);
+    private Integer getVisibilityTimeoutSeconds() {
+        return visibilityTimeoutSeconds;
+    }
+
+    public SimpleSqsListener withWaitTime(Integer waitTimeSeconds) {
+        this.waitTimeSeconds = waitTimeSeconds;
         return this;
     }
 
-    public SimpleSqsListener withBackOffTimeSeconds(int backOffTimeSeconds) {
+    private Integer getWaitTimeSeconds() {
+        return waitTimeSeconds;
+    }
+
+    public SimpleSqsListener withBackOffTime(int backOffTimeSeconds) {
         this.backOffTimeSeconds = backOffTimeSeconds;
         return this;
     }
@@ -123,5 +147,4 @@ public class SimpleSqsListener {
     private long getBackOffTimeSeconds() {
         return backOffTimeSeconds;
     }
-
 }
