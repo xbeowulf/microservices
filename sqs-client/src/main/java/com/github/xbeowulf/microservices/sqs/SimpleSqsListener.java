@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -28,28 +30,34 @@ public class SimpleSqsListener {
     private Integer visibilityTimeoutSeconds;
     private Integer waitTimeSeconds;
 
-    private volatile boolean isRunning;
+    private AtomicBoolean isRunning;
 
     public SimpleSqsListener(AmazonSQS sqs, String queueUrl, Consumer<String> action) {
         this.sqs = sqs;
         this.queueUrl = queueUrl;
         this.action = action;
+        this.isRunning = new AtomicBoolean(false);
     }
 
     public void start() {
-        isRunning = true;
+        if (isRunning.compareAndSet(false, true)) {
+            doStart();
+        }
+    }
+
+    private void doStart() {
         newSingleThreadExecutor().submit(() -> {
 
             ReceiveMessageRequest receiveMessageRequest = buildReceiveMessageRequest();
             ExecutorService messageActionExecutor = newFixedThreadPool(receiveMessageRequest.getMaxNumberOfMessages());
-            while (isRunning) {
+            while (isRunning.get()) {
 
                 try {
                     List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
                     CountDownLatch messageBatchLatch = new CountDownLatch(messages.size());
 
                     for (Message message : messages) {
-                        if (isRunning) {
+                        if (isRunning.get()) {
 
                             messageActionExecutor.submit(() -> {
                                 try {
@@ -77,7 +85,7 @@ public class SimpleSqsListener {
                     log.warn("Failed to poll queue {}. Will retry in {} seconds.",
                             getQueueUrl(), getBackOffTimeSeconds(), e);
                     try {
-                        Thread.sleep(getBackOffTimeSeconds() * 1000);
+                        TimeUnit.SECONDS.sleep(getBackOffTimeSeconds());
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
@@ -87,7 +95,7 @@ public class SimpleSqsListener {
     }
 
     public void stop() {
-        isRunning = false;
+        isRunning.set(false);
     }
 
     private ReceiveMessageRequest buildReceiveMessageRequest() {
