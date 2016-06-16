@@ -62,10 +62,10 @@ public class SimpleSqsListener {
                             messageActionExecutor.submit(() -> {
                                 try {
                                     action.accept(message.getBody());
-                                    sqs.deleteMessage(getQueueUrl(), message.getReceiptHandle());
                                 } catch (Exception e) {
                                     log.error("Failed to process message: {}.", message);
                                 } finally {
+                                    sqs.deleteMessage(getQueueUrl(), message.getReceiptHandle());
                                     messageBatchLatch.countDown();
                                 }
                             });
